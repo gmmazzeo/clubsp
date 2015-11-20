@@ -37,8 +37,7 @@ public class MarginalComputationExecutionPlan {
     public String[][] initComputation(int d) {
         int n = workerAllocations[d].size();
         if (n == 1 || numberOfPairsLeft[d] > 0) {
-            //an error occurred;
-            return null;
+            return null; //this should never happen
         }
         String[][] res = new String[n / 2][2];
         for (int i = 0; i < n - 1; i += 2) {

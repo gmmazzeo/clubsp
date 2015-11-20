@@ -45,7 +45,7 @@ public class Worker {
         if (!f.exists() || !f.isDirectory()) {
             System.out.println("Directory " + datasetsPath + " not found");
             System.out.println("Worker terminated");
-            throw new Exception("Wronf path");
+            throw new Exception("Wrong path "+datasetsPath);
         }
         this.datasetsPath = datasetsPath;
         if (!datasetsPath.endsWith(File.pathSeparator)) {
@@ -115,8 +115,8 @@ public class Worker {
     //args[3] is the port of the master
     public static void main(String[] args) {
         if (args == null || args.length != 4) {
-            //args = new String[]{"" + (10000 + (int) (Math.random() * 10000)), "/home/massimo/", "localhost"/*"131.179.64.170"*/, "9090"};
-            args = new String[]{"" + (10000 + (int) (Math.random() * 10000)), "/home/massimo/", "131.179.64.145"/*"131.179.64.170"*/, "9090"};
+            args = new String[]{"" + (10000 + (int) (Math.random() * 10000)), "/home/massimo/", "localhost"/*"131.179.64.170"*/, "9090"};
+            //args = new String[]{"" + (10000 + (int) (Math.random() * 10000)), "/home/massimo/", "131.179.64.145"/*"131.179.64.170"*/, "9090"};
             //System.out.println("Parameters needed: port dataSetsPath masterIp masterPort");
             //System.out.println("Worker terminated");
             //return;

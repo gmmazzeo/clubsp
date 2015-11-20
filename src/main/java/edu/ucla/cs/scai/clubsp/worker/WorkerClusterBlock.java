@@ -82,7 +82,7 @@ public class WorkerClusterBlock implements Comparable<WorkerClusterBlock> {
         localMarginals = new MarginalDistributionWithSquares[dimensionality];
         globalMarginals = new MarginalDistribution[dimensionality];
         if (computeMarginals) {
-            computeMarginalsFromaData();
+            computeMarginalsFromData();
         }
     }
 
@@ -103,7 +103,7 @@ public class WorkerClusterBlock implements Comparable<WorkerClusterBlock> {
         this.globalN = globalCount;
     }
 
-    private void computeMarginalsFromaData() {
+    private void computeMarginalsFromData() {
         for (int i = 0; i < dimensionality; i++) {
             localMarginals[i] = new MarginalDistributionWithSquares(r.getWidth(i));
         }
@@ -121,11 +121,17 @@ public class WorkerClusterBlock implements Comparable<WorkerClusterBlock> {
         localN = data.size();
         localLS = new double[dimensionality];
         localSS = new double[dimensionality];
-        for (int i = 0; i < dimensionality; i++) {
-            for (int j = 0; j < localMarginals[i].count.length; j++) {
-                if (localMarginals[i].count[j] > 0) {
-                    localLS[i] += localMarginals[i].sum[j][i];
-                    localSS[i] += localMarginals[i].sumSqr[j][i];
+        int shortestMarginal=0;
+        for (int i=1; i<dimensionality; i++) {
+            if (localMarginals[i].count.length<localMarginals[shortestMarginal].count.length) {
+                shortestMarginal=i;
+            }
+        }
+        for (int j = 0; j < localMarginals[shortestMarginal].count.length; j++) {
+            for (int i = 0; i < dimensionality; i++) {            
+                if (localMarginals[shortestMarginal].count[j] > 0) {
+                    localLS[i] += localMarginals[shortestMarginal].sum[j][i];
+                    localSS[i] += localMarginals[shortestMarginal].sumSqr[j][i];
                 }
             }
         }

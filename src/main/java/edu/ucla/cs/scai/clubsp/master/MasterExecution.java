@@ -76,12 +76,20 @@ public class MasterExecution {
     int receivedFinalRefinement = 0;
     Sequence sequence = new Sequence();
     int nLeaves = 1;
+    long startTime;
+    long startInitRootTime;
+    long startSplittingTime;
+    long startIntermediateRefinementTime;
+    long startMergingTime;
+    long startFinalRefinementTime;
+    long finishTime;
 
     public MasterExecution(final Master master, final String dataSetId, final double scaleFactor) {
+        startTime = System.currentTimeMillis();
         this.master = master;
         this.dataSetId = dataSetId;
         this.scaleFactor = scaleFactor;
-        this.executionId = dataSetId + "_" + System.currentTimeMillis();
+        this.executionId = dataSetId + "_" + startTime;
         this.workerIds.addAll(master.registeredWorkers.keySet());
         final HashMap<String, RegisteredWorker> currentWorkers = new HashMap<>(master.registeredWorkers);
         new Thread() {
@@ -107,6 +115,7 @@ public class MasterExecution {
         }
         receivedLocalDomains++;
         if (receivedLocalDomains == workerIds.size()) {
+            startInitRootTime = System.currentTimeMillis();
             root = MasterClusterBlock.initRoot(globalDomain, 0);
             blocks.put(0, root);
             InitRootRequest c = new InitRootRequest(executionId, globalDomain);
@@ -120,6 +129,7 @@ public class MasterExecution {
         receivedRootInfo++;
         root.addGlobalNLSSS(n, LS, SS, receivedRootInfo == 1);
         if (receivedRootInfo == workerIds.size()) {
+            startSplittingTime = System.currentTimeMillis();
             root.computeGlobalSSQ();
             SSQ0 = root.getGlobalSSQ();
             SSQ = SSQ0;
@@ -130,14 +140,17 @@ public class MasterExecution {
 
     void startSplitNextEnqueuedBlock() {
         final MasterClusterBlock block = splittingQueue.poll();
-        if (workerIds.size() > 1) {
-            final MarginalComputationExecutionPlan ep = new MarginalComputationExecutionPlan(dimensionality, workerIds);
-            marginalComputationExecutionPlans.put(block.id, ep);
-            new Thread() {
-                @Override
-                public void run() {
-                    for (int i = 0; i < dimensionality; i++) {
-                        final String[][] plan = ep.initComputation(i);
+        final MarginalComputationExecutionPlan ep = new MarginalComputationExecutionPlan(dimensionality, workerIds);
+        marginalComputationExecutionPlans.put(block.id, ep);
+        new Thread() {
+            @Override
+            public void run() {
+                for (int i = 0; i < dimensionality; i++) {
+                    if (workerIds.size() == 1) {
+                        String workerId = workerIds.get(0);
+                        master.sendMessage(workerId, new ComputeBestSplitRequest(executionId, block.id, i, block.globalN, block.globalLS, block.globalSS));
+                    } else {
+                        String[][] plan = ep.initComputation(i);
                         for (int k = 0; k < plan.length; k++) {
                             String s = plan[k][1];
                             String r = plan[k][0];
@@ -145,18 +158,9 @@ public class MasterExecution {
                         }
                     }
                 }
+            }
 
-            }.start();
-        } else { //request the best split for each dimension to the only worker
-            new Thread() {
-                @Override
-                public void run() {
-                    for (int i = 0; i < dimensionality; i++) {
-                        master.sendMessage(workerIds.get(0), new ComputeBestSplitRequest(executionId, block.id, i, block.globalN, block.globalLS, block.globalSS));
-                    }
-                }
-            }.start();
-        }
+        }.start();
     }
 
     public synchronized void increaseReceivedMarginals(final int blockId, final int dimension) {
@@ -254,7 +258,7 @@ public class MasterExecution {
         if (satisfied) {
             valleyCriterionSatisfied.add(blockId);
             doSplit(blockId);
-        } else if (alreadyReceived == workerIds.size()) {
+        } else if (alreadyReceived == dimensionality) {
             clusters.add(blocks.get(blockId));
             if (splittingQueue.isEmpty()) {
                 startIntermediateRefinement();
@@ -333,7 +337,7 @@ public class MasterExecution {
     }
 
     public void startIntermediateRefinement() {
-
+        startIntermediateRefinementTime = System.currentTimeMillis();
         //first computes the noise-block candidates
         ArrayList<Double> densities = new ArrayList<>();
 
@@ -405,6 +409,7 @@ public class MasterExecution {
     }
 
     public void startAgglomerativePhase() {
+        startMergingTime = System.currentTimeMillis();
         //first find the actual cluster
         //and compute the SSQ of the whole dataset without outlier
         //and the sum of SSQ of clusters
@@ -497,6 +502,7 @@ public class MasterExecution {
     }
 
     public void sendFinalRefinementRequest() {
+        startFinalRefinementTime = System.currentTimeMillis();
         ArrayList<double[]> clusterCentroids = new ArrayList<>();
         ArrayList<double[]> clusterDetailedRadii = new ArrayList<>();
         int id = 1;
@@ -519,10 +525,20 @@ public class MasterExecution {
             i++;
         }
         if (receivedFinalRefinement == workerIds.size()) {
-            for (MasterClusterBlock c:clusters) {
+            for (MasterClusterBlock c : clusters) {
                 c.computeGlobalSSQ();
             }
+            finishTime = System.currentTimeMillis();
             System.out.println("Finished execution " + executionId);
+            System.out.println("Start time: "+startTime);
+            System.out.println("Start init root time: "+startInitRootTime+" (+"+(startInitRootTime-startTime)+" msec)");
+            System.out.println("Start divisive step: "+startSplittingTime+" (+"+(startSplittingTime-startInitRootTime)+" msec)");
+            System.out.println("Start intermediate refinement step: "+startIntermediateRefinementTime+" (+"+(startIntermediateRefinementTime-startSplittingTime)+" msec)");
+            System.out.println("Start agglomerative step: "+startMergingTime+" (+"+(startMergingTime-startIntermediateRefinementTime)+" msec)");
+            System.out.println("Start final refinement step: "+startFinalRefinementTime+" (+"+(startFinalRefinementTime-startMergingTime)+" msec)");
+            System.out.println("Finish time: "+finishTime+" (+"+(finishTime-startFinalRefinementTime)+" msec)");
+            System.out.println("Total time: "+(finishTime-startTime)+" msec");
+            System.out.println(clusters.size()+" clusters found");
         }
     }
 

@@ -28,24 +28,6 @@ public class Utils {
     public final static double RECIP_E = 0.36787944117144232159552377016147; // RECIP_E = (E^-1) = (1.0 / E)
     public final static double TWOPI = 6.283185307179586476925286766559;  // TWOPI = 2.0 * PI    
 
-    public static Range getMbr(Collection<DataSetPoint> data) {
-        Iterator<DataSetPoint> it = data.iterator();
-        int[] p = it.next().p;
-        int[] inf = Arrays.copyOf(p, p.length);
-        int[] sup = Arrays.copyOf(p, p.length);
-        while (it.hasNext()) {
-            p = it.next().p;
-            for (int k = 0; k < p.length; k++) {
-                if (p[k] < inf[k]) {
-                    inf[k] = p[k];
-                } else if (p[k] > sup[k]) {
-                    sup[k] = p[k];
-                }
-            }
-        }
-        return new Range(inf, sup);
-    }
-
     //We don't care about the exact value if greater than 1
     public static double ellipticalRelativeDistanceWithLimit1(double[] center, double[] radius, double[] p) {
         double d = 0;
