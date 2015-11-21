@@ -20,6 +20,7 @@ import edu.ucla.cs.scai.clubsp.messages.ComputeBestSplitRequest;
 import edu.ucla.cs.scai.clubsp.messages.ComputeValleyCriterionRequest;
 import edu.ucla.cs.scai.clubsp.messages.ExecutionMessage;
 import edu.ucla.cs.scai.clubsp.messages.FinalRefinementRequest;
+import edu.ucla.cs.scai.clubsp.messages.GenerateDataSetRequest;
 import edu.ucla.cs.scai.clubsp.messages.InitRootRequest;
 import edu.ucla.cs.scai.clubsp.messages.IntermediateRefinementRequest;
 import edu.ucla.cs.scai.clubsp.messages.LoadDataSetRequest;
@@ -54,6 +55,9 @@ public class WorkerIncomingMessageHandler extends Thread {
             if (msg instanceof WorkerConnectionResponse) {
                 WorkerConnectionResponse res = (WorkerConnectionResponse) msg;
                 worker.initId(res.assignedId, res.e);
+            } else if (msg instanceof GenerateDataSetRequest) {
+                GenerateDataSetRequest c = (GenerateDataSetRequest) msg;
+                worker.doGeneration(c.nOfTuples, c.domainWidth, c.noiseRatio, c.centers, c.radii);
             } else if (msg instanceof LoadDataSetRequest) {
                 LoadDataSetRequest c = (LoadDataSetRequest) msg;
                 worker.initExecution(c.executionId, c.dataSetId, c.workers, c.scaleFactor);

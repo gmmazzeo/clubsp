@@ -18,11 +18,18 @@ package edu.ucla.cs.scai.clubsp.worker;
 import edu.ucla.cs.scai.clubsp.commons.RegisteredWorker;
 import edu.ucla.cs.scai.clubsp.messages.ClubsPMessage;
 import edu.ucla.cs.scai.clubsp.messages.WorkerConnectionRequest;
+import edu.ucla.cs.scai.clustering.syntheticgenerator.MultidimensionalGaussianGenerator;
+import static edu.ucla.cs.scai.clustering.syntheticgenerator.MultidimensionalGaussianGenerator.createImage;
+import static edu.ucla.cs.scai.clustering.syntheticgenerator.MultidimensionalGaussianGenerator.shuffleDataset;
+import edu.ucla.cs.scai.clustering.syntheticgenerator.Range;
 import java.io.File;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  *
@@ -45,7 +52,7 @@ public class Worker {
         if (!f.exists() || !f.isDirectory()) {
             System.out.println("Directory " + datasetsPath + " not found");
             System.out.println("Worker terminated");
-            throw new Exception("Wrong path "+datasetsPath);
+            throw new Exception("Wrong path " + datasetsPath);
         }
         this.datasetsPath = datasetsPath;
         if (!datasetsPath.endsWith(File.pathSeparator)) {
@@ -160,4 +167,26 @@ public class Worker {
         workerExecutions.put(executionId, newExec);
     }
 
+    public void doGeneration(int nOfTuples, int domainWidth, double noiseRatio, int[][] centers, int[][] radii) {
+        int nOfClusters = centers.length;
+        int dimensionality = centers[0].length;
+        String fileName = datasetsPath + nOfTuples + "p_" + dimensionality + "d_" + nOfClusters + "c_" + noiseRatio + "n.data";
+        System.out.println("Generating " + fileName);
+        int[] inf = new int[dimensionality];
+        int[] sup = new int[dimensionality];
+        for (int i = 0; i < dimensionality; i++) {
+            inf[i] = 0;
+            sup[i] = domainWidth - 1;
+        }
+
+        Range r = new Range(inf, sup);
+        try {
+            MultidimensionalGaussianGenerator.generate(fileName, r, nOfTuples, centers, radii, noiseRatio, 100);
+            createImage(fileName, fileName + "_labels", r, true);
+            String fileNameOut = datasetsPath + nOfTuples + "p_" + dimensionality + "d_" + nOfClusters + "c_" + noiseRatio + "n.data";
+            shuffleDataset(fileName, fileName + "_labels", fileNameOut, fileNameOut + "_labels", new Random());
+        } catch (Exception e) {
+            e.printStackTrace();;
+        }
+    }
 }

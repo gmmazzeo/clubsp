@@ -83,6 +83,7 @@ public class MasterExecution {
     long startMergingTime;
     long startFinalRefinementTime;
     long finishTime;
+    int clustersAfterDivisiveStep;
 
     public MasterExecution(final Master master, final String dataSetId, final double scaleFactor) {
         startTime = System.currentTimeMillis();
@@ -337,6 +338,7 @@ public class MasterExecution {
     }
 
     public void startIntermediateRefinement() {
+        clustersAfterDivisiveStep=clusters.size();
         startIntermediateRefinementTime = System.currentTimeMillis();
         //first computes the noise-block candidates
         ArrayList<Double> densities = new ArrayList<>();
@@ -538,6 +540,7 @@ public class MasterExecution {
             System.out.println("Start final refinement step: "+startFinalRefinementTime+" (+"+(startFinalRefinementTime-startMergingTime)+" msec)");
             System.out.println("Finish time: "+finishTime+" (+"+(finishTime-startFinalRefinementTime)+" msec)");
             System.out.println("Total time: "+(finishTime-startTime)+" msec");
+            System.out.println(clustersAfterDivisiveStep+" blocks after divisive step");
             System.out.println(clusters.size()+" clusters found");
         }
     }

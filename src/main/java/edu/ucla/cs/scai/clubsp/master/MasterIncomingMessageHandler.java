@@ -27,6 +27,7 @@ import edu.ucla.cs.scai.clubsp.messages.ReceiveMarginalsResponse;
 import edu.ucla.cs.scai.clubsp.messages.RestrictedCountResponse;
 import edu.ucla.cs.scai.clubsp.messages.SplitResponse;
 import edu.ucla.cs.scai.clubsp.messages.StartClusteringRequest;
+import edu.ucla.cs.scai.clubsp.messages.StartGenerationRequest;
 import edu.ucla.cs.scai.clubsp.messages.WorkerConnectionRequest;
 import edu.ucla.cs.scai.clubsp.messages.WorkerConnectionResponse;
 import java.io.IOException;
@@ -62,6 +63,9 @@ public class MasterIncomingMessageHandler extends Thread {
             } else if (msg instanceof StartClusteringRequest) {
                 StartClusteringRequest c = (StartClusteringRequest) msg;
                 master.initExecution(c.dataSetId, 1);
+            } else if (msg instanceof StartGenerationRequest) {
+                StartGenerationRequest c = (StartGenerationRequest) msg;
+                master.initGeneration(c.nOfTuples, c.dimensionality, c.domainWidth, c.nOfClusters, c.noiseRatio);
             } else if (msg instanceof ExecutionMessage) {
                 MasterExecution ex = master.masterExecutions.get(((ExecutionMessage) msg).executionId);
                 if (msg instanceof LoadDataSetResponse) {

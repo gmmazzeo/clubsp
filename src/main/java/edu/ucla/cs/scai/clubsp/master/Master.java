@@ -7,10 +7,14 @@ package edu.ucla.cs.scai.clubsp.master;
 
 import edu.ucla.cs.scai.clubsp.commons.RegisteredWorker;
 import edu.ucla.cs.scai.clubsp.messages.ClubsPMessage;
+import edu.ucla.cs.scai.clubsp.messages.GenerateDataSetRequest;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  *
@@ -90,6 +94,34 @@ public class Master {
             new Master(port).start();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void initGeneration(int nOfTuples, int dimensionality, int domainWidth, int nOfClusters, double noiseRatio) {
+        Random rand = new Random(100);
+        ArrayList<Double>[] positions = new ArrayList[dimensionality];
+        double interval = 1.0 / (nOfClusters + 1);
+        for (int dim = 0; dim < positions.length; dim++) {
+            positions[dim] = new ArrayList<>();
+            for (int clus = 0; clus < nOfClusters; clus++) {
+                positions[dim].add((clus + 1) * interval - 0.05 * interval + 0.1 * interval * rand.nextDouble());
+            }
+            Collections.shuffle(positions[dim], rand);
+        }
+        int[][] centers=new int[nOfClusters][dimensionality];
+        for (int i=0; i<nOfClusters; i++) {
+            for (int k=0; k<dimensionality; k++) {
+                centers[i][k]=(int)(domainWidth*positions[k].get(i));
+            }
+        }
+        int radii[][] = new int[nOfClusters][dimensionality];
+        for (int clus = 0; clus < nOfClusters; clus++) {
+            for (int i = 0; i < dimensionality; i++) {
+                radii[clus][i] = (int)(0.2 * interval + 0.8 * rand.nextDouble() * interval + 0.5);
+            }
+        }
+        for (String workerId:registeredWorkers.keySet()) {
+            sendMessage(workerId, new GenerateDataSetRequest(nOfTuples, domainWidth, noiseRatio, centers, radii));
         }
     }
 }
