@@ -27,11 +27,7 @@ public class ClubsPStarter {
 
     public static void main(String args[]) {
         if (args == null || args.length != 3) {
-            args = new String[]{"localhost", "9090", "test.data"};
-            //args = new String[]{"131.179.64.145", "9090", "test.data"};
-            //System.out.println("Parameters needed: masterIp masterPort dataSetId");
-            //System.out.println("Starter terminated");
-            //return;
+            args = new String[]{"localhost", "9192", "6250000p_2d_16c_0.02n.data"};
         }
         int port;
         try {

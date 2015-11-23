@@ -78,7 +78,7 @@ public class Master {
     //args[0] is the port used by the master
     public static void main(String[] args) {
         if (args == null || args.length != 1) {
-            args = new String[]{"9090"};
+            args = new String[]{"9192"};
             //System.out.println("Parameters needed: port");
             //return;
         }
